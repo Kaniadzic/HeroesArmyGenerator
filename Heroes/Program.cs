@@ -2,22 +2,119 @@
 
 public class HelloWorld
 {
+    private bool currentPlayer = false;
+    private int turnCounter = 0;
+
     public static void Main(string[] args)
     {
+
+        #region Generowanie armii
+
         ArmyGenerator armyGenerator = new ArmyGenerator();
 
-        int[] armyNumbers = armyGenerator.GenerateArmyNumbers();
-        List<Unit> unitList = new List<Unit>();
+        // generowanie armii 1
+        int[] armyNumbers1 = armyGenerator.GenerateArmyNumbers();
+        List<KeyValuePair<Unit, int>> army1 = armyGenerator.GenerateArmy(armyNumbers1);
+        foreach(var unit in army1)
+        {
+            unit.Key.player = true;
+            unit.Key.total_hp = unit.Key.hp * unit.Value;
+        }
 
-        unitList.Add(new Unit(1, "Troglodyta", 4, 3, false, 5, 1, 3, 4));
-        unitList.Add(new Unit(2, "Harpia", 6, 5, false, 14, 1, 4, 6));
-        unitList.Add(new Unit(3, "Złe Oko", 9, 7, true, 22, 3, 5, 5));
-        unitList.Add(new Unit(4, "Meduza", 9, 9, true, 25, 6, 8, 5));
-        unitList.Add(new Unit(5, "Minotaur", 14, 12, false, 50, 12, 20, 6));
-        unitList.Add(new Unit(6, "Mantykora", 15, 13, false, 80, 14, 20, 7));
-        unitList.Add(new Unit(7, "Smok", 19, 19, false, 180, 40, 50, 11));
+        // generowanie armii 2
+        int[] armyNumbers2 = armyGenerator.GenerateArmyNumbers();
+        List<KeyValuePair<Unit, int>> army2 = armyGenerator.GenerateArmy(armyNumbers2);
+        foreach (var unit in army2)
+        {
+            unit.Key.player = false;
+            unit.Key.total_hp = unit.Key.hp * unit.Value;
+        }
 
-        Dictionary<Unit, int> normalArmy = armyGenerator.GenerateArmy(unitList, armyNumbers);
-        Dictionary<Unit, int> randomizedArmy = armyGenerator.RandomizeArmy(armyGenerator.GenerateArmy(unitList, armyNumbers));
+        #endregion
+
+        #region Generowanie planszy, pozycji startowych i sortowanie armii (według szybkości jednostek)
+
+        // generowanie planszy
+        List<Field> board = new List<Field>();
+
+        for(int i=0; i < 15; i++)
+        {
+            for(int j=0; j < 11; j++)
+            {
+                board.Add(new Field(i, j, new KeyValuePair<Unit, int>(null, 0)));
+            }
+        }
+
+        // generowanie pozycji startowych
+        var startingPositionsArmy1 = armyGenerator.generateStartingPositions();
+        var startingPositionsArmy2 = armyGenerator.generateStartingPositions();
+
+        for(int i = 0; i < army1.Count(); i++)
+        {
+            board.Where(f => f.y == startingPositionsArmy1[i] & f.x == 0).FirstOrDefault().unit = army1.ElementAt(i);
+        }
+
+        for (int i = 0; i < army2.Count(); i++)
+        {
+            board.Where(f => f.y == startingPositionsArmy2[i] & f.x == 14).FirstOrDefault().unit = army2.ElementAt(i);
+        }
+
+        #endregion
+
+
+        // test
+        var dupa = board.Where(x => x.unit.Key != null);
+
+        Console.WriteLine(" ============= Kompozycja armii ============= ");
+        foreach(var u in dupa)
+        {
+            if (u.unit.Key.player)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Blue;
+            }
+
+            Console.WriteLine($"Gracz {u.unit.Key.player} jednostka {u.unit.Key.name} [{u.unit.Value}] jest na pozycji X: {u.x} Y: {u.y}");
+        }
+        Console.ForegroundColor = ConsoleColor.White;
+        // =============================
+
+        //var sortedUnits = board
+        //    .Where(x => x.unit.Key != null)
+        //    .OrderBy(x => x.unit.Key.speed);
+
+        //int existingArmies = board
+        //    .Where(x => x.unit.Key != null)
+        //    .Select(x => x.unit.Key.player)
+        //    .Distinct()
+        //    .Count();
+
+        //while (existingArmies == 2)
+        //{
+        //    board.Remove(sortedUnits.ElementAt(0));
+
+        //    sortedUnits = board
+        //        .Where(x => x.unit.Key != null)
+        //        .OrderBy(x => x.unit.Key.speed);
+
+        //    existingArmies = board
+        //        .Where(x => x.unit.Key != null)
+        //        .Select(x => x.unit.Key.player)
+        //        .Distinct()
+        //        .Count();
+        //}
+
+    }
+
+    public void playerTurn()
+    {
+        turnCounter += 1;
+
+
+
+        currentPlayer = !currentPlayer;
     }
 }

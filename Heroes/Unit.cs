@@ -29,5 +29,7 @@
         public byte minDamage { get; }
         public byte maxDamage { get; }
         public byte speed { get; }
+        public bool player { get; set; }
+        public int total_hp {get; set; }
     }
 }
