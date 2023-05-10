@@ -111,7 +111,6 @@
             return result;
         }
 
-
         /// <summary>
         /// Obliczenie obrażeń
         /// </summary>
@@ -133,9 +132,27 @@
             return damage;
         }
 
-        public void logger(string message, ConsoleColor color)
+        /// <summary>
+        /// Wyświetlenie początkowych armii
+        /// </summary>
+        /// <param name="units"> Jednostki do wyświetlenia </param>
+        public void logStartingArmies(IEnumerable<Field> units)
         {
+            Console.WriteLine(" ============= Kompozycja armii ============= ");
+            foreach (var u in units)
+            {
+                if (u.unit.Key.player)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                }
 
+                Console.WriteLine($"Gracz {u.unit.Key.player} jednostka {u.unit.Key.name} [{u.unit.Value}] jest na pozycji X: {u.x} Y: {u.y}");
+            }
+            Console.ForegroundColor = ConsoleColor.White;
         }
     }
 }

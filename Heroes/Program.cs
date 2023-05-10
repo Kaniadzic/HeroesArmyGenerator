@@ -51,38 +51,19 @@ public class HelloWorld
         for(int i = 0; i < army1.Count(); i++)
         {
             board.Where(f => f.y == startingPositionsArmy1[i] & f.x == 0).FirstOrDefault().unit = army1.ElementAt(i);
-        }
-
-        for (int i = 0; i < army2.Count(); i++)
-        {
             board.Where(f => f.y == startingPositionsArmy2[i] & f.x == 14).FirstOrDefault().unit = army2.ElementAt(i);
         }
 
+        // wyświetlenie początkowych armii
+        helper.logStartingArmies(board.Where(x => x.unit.Key != null));
+
         #endregion
 
-
-        // test
-        var dupa = board.Where(x => x.unit.Key != null);
-        Console.WriteLine(" ============= Kompozycja armii ============= ");
-        foreach(var u in dupa)
-        {
-            if (u.unit.Key.player)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Blue;
-            }
-
-            Console.WriteLine($"Gracz {u.unit.Key.player} jednostka {u.unit.Key.name} [{u.unit.Value}] jest na pozycji X: {u.x} Y: {u.y}");
-        }
-        Console.ForegroundColor = ConsoleColor.White;
-        // koniec testu
+        #region Przygotowania do bitwy
 
         var sortedUnits = board
-            .Where(x => x.unit.Key != null)
-            .OrderBy(x => x.unit.Key.speed);
+           .Where(x => x.unit.Key != null)
+           .OrderByDescending(x => x.unit.Key.speed);
 
         int existingArmies = board
             .Where(x => x.unit.Key != null)
@@ -90,13 +71,18 @@ public class HelloWorld
             .Distinct()
             .Count();
 
+        #endregion
+
+        #region Bitwa
+
         // Rozgrywka toczy się dopóki na planszy są dwie armie
         while (existingArmies == 2)
         {
             turnCounter += 1; // licznik tur
 
-            existingArmies = board
+            existingArmies = sortedUnits
                 .Where(x => x.unit.Key != null)
+                .Where(x => x.unit.Key.total_hp > 0)
                 .Select(x => x.unit.Key.player)
                 .Distinct()
                 .Count();
@@ -116,6 +102,11 @@ public class HelloWorld
                     {
                         // wybranie celu
                         var target = helper.getSlowestEnemy(u.unit.Key.player, board);
+
+                        if (target == null)
+                        {
+                            continue;
+                        }
 
                         // obliczenie obrażeń
                         double damage = helper.calculateDamage(
@@ -141,5 +132,7 @@ public class HelloWorld
                 }
             }
         }
+
+        #endregion
     }
 }
