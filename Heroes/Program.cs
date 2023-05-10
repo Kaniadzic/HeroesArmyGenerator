@@ -96,7 +96,6 @@ public class HelloWorld
                 }
                 else // walka
                 {
-
                     // walka dystansowa
                     if (u.unit.Key.ranged == true)
                     {
@@ -122,9 +121,9 @@ public class HelloWorld
                     }
                     else // walka w zwarciu
                     {
-                        
+                        //helper.getEnemiesInRange(u.unit.Key.player, u.x, u.y, u.unit.Key.speed, board);
 
-                  
+                        helper.getEnemiesInRange(u.unit.Key.player, 0, 0, 2, board);
 
                     }
 

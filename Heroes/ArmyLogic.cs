@@ -154,5 +154,127 @@
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
+
+        public List<Field> getEnemiesInRange(bool player, int x, int y, int speed, List<Field> board)
+        {
+            List<Field> result = new List<Field>();
+
+            if (y % 2 == 0)
+            {
+                var n1 = board
+                    .Where(n => n.x == x - 1)
+                    .Where(n => n.y == y - 1)
+                    .FirstOrDefault();
+
+                var n2 = board
+                    .Where(n => n.x == x)
+                    .Where(n => n.y == y - 1)
+                    .FirstOrDefault();
+
+                var n3 = board
+                    .Where(n => n.x == x + 1)
+                    .Where(n => n.y == y)
+                    .FirstOrDefault();
+
+                var n4 = board
+                    .Where(n => n.x == x)
+                    .Where(n => n.y == y + 1)
+                    .FirstOrDefault();
+
+                var n5 = board
+                    .Where(n => n.x == x - 1)
+                    .Where(n => n.y == y + 1)
+                    .FirstOrDefault();
+
+                var n6 = board
+                    .Where(n => n.x == x - 1)
+                    .Where(n => n.y == y)
+                    .FirstOrDefault();
+
+                if (!result.Contains(n1) && n1 != null)
+                {
+                    result.Add(n1);
+                }
+                if (!result.Contains(n2) && n2 != null)
+                {
+                    result.Add(n2);
+                }
+                if (!result.Contains(n3) && n3 != null)
+                {
+                    result.Add(n3);
+                }
+                if (!result.Contains(n4) && n4 != null)
+                {
+                    result.Add(n4);
+                }
+                if (!result.Contains(n5) && n5 != null)
+                {
+                    result.Add(n5);
+                }
+                if (!result.Contains(n6) && n6 != null)
+                {
+                    result.Add(n6);
+                }
+            }
+            else
+            {
+                var n1 = board
+                    .Where(n => n.x == x)
+                    .Where(n => n.y == y - 1)
+                    .FirstOrDefault();
+
+                var n2 = board
+                    .Where(n => n.x == x + 1)
+                    .Where(n => n.y == y - 1)
+                    .FirstOrDefault();
+
+                var n3 = board
+                    .Where(n => n.x == x + 1)
+                    .Where(n => n.y == y)
+                    .FirstOrDefault();
+
+                var n4 = board
+                    .Where(n => n.x == x + 1)
+                    .Where(n => n.y == y + 1)
+                    .FirstOrDefault();
+
+                var n5 = board
+                    .Where(n => n.x == x)
+                    .Where(n => n.y == y + 1)
+                    .FirstOrDefault();
+
+                var n6 = board
+                    .Where(n => n.x == x - 1)
+                    .Where(n => n.y == y)
+                    .FirstOrDefault();
+
+                if (!result.Contains(n1) && n1 != null)
+                {
+                    result.Add(n1);
+                }
+                if (!result.Contains(n2) && n2 != null)
+                {
+                    result.Add(n2);
+                }
+                if (!result.Contains(n3) && n3 != null)
+                {
+                    result.Add(n3);
+                }
+                if (!result.Contains(n4) && n4 != null)
+                {
+                    result.Add(n4);
+                }
+                if (!result.Contains(n5) && n5 != null)
+                {
+                    result.Add(n5);
+                }
+                if (!result.Contains(n6) && n6 != null)
+                {
+                    result.Add(n6);
+                }
+            }
+
+            return result;
+        }
     }
 }
