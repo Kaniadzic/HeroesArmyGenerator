@@ -2,11 +2,10 @@
 
 public class HelloWorld
 {
-    private bool currentPlayer = false;
-    private int turnCounter = 0;
-
     public static void Main(string[] args)
     {
+        int turnCounter = 0;
+        GameHelper helper = new GameHelper();
 
         #region Generowanie armii
 
@@ -64,7 +63,6 @@ public class HelloWorld
 
         // test
         var dupa = board.Where(x => x.unit.Key != null);
-
         Console.WriteLine(" ============= Kompozycja armii ============= ");
         foreach(var u in dupa)
         {
@@ -80,41 +78,68 @@ public class HelloWorld
             Console.WriteLine($"Gracz {u.unit.Key.player} jednostka {u.unit.Key.name} [{u.unit.Value}] jest na pozycji X: {u.x} Y: {u.y}");
         }
         Console.ForegroundColor = ConsoleColor.White;
-        // =============================
+        // koniec testu
 
-        //var sortedUnits = board
-        //    .Where(x => x.unit.Key != null)
-        //    .OrderBy(x => x.unit.Key.speed);
+        var sortedUnits = board
+            .Where(x => x.unit.Key != null)
+            .OrderBy(x => x.unit.Key.speed);
 
-        //int existingArmies = board
-        //    .Where(x => x.unit.Key != null)
-        //    .Select(x => x.unit.Key.player)
-        //    .Distinct()
-        //    .Count();
+        int existingArmies = board
+            .Where(x => x.unit.Key != null)
+            .Select(x => x.unit.Key.player)
+            .Distinct()
+            .Count();
 
-        //while (existingArmies == 2)
-        //{
-        //    board.Remove(sortedUnits.ElementAt(0));
+        // Rozgrywka toczy się dopóki na planszy są dwie armie
+        while (existingArmies == 2)
+        {
+            turnCounter += 1; // licznik tur
 
-        //    sortedUnits = board
-        //        .Where(x => x.unit.Key != null)
-        //        .OrderBy(x => x.unit.Key.speed);
+            existingArmies = board
+                .Where(x => x.unit.Key != null)
+                .Select(x => x.unit.Key.player)
+                .Distinct()
+                .Count();
 
-        //    existingArmies = board
-        //        .Where(x => x.unit.Key != null)
-        //        .Select(x => x.unit.Key.player)
-        //        .Distinct()
-        //        .Count();
-        //}
+            // sprawdzenie czy istnieją jeszcze żywe jednostki
+            foreach (var u in sortedUnits)
+            {
+                if (u.unit.Key.total_hp <= 0) // jeśli jednostka jest martwa to ją pomijamy
+                {
+                    continue;
+                }
+                else // walka
+                {
 
-    }
+                    // walka dystansowa
+                    if (u.unit.Key.ranged == true)
+                    {
+                        // wybranie celu
+                        var target = helper.getSlowestEnemy(u.unit.Key.player, board);
 
-    public void playerTurn()
-    {
-        turnCounter += 1;
+                        // obliczenie obrażeń
+                        double damage = helper.calculateDamage(
+                            u.unit.Key.attack,
+                            target.unit.Key.defense,
+                            u.unit.Key.minDamage,
+                            u.unit.Key.maxDamage,
+                            u.unit.Key.total_hp / u.unit.Key.hp
+                        );
+
+                        // zadanie obrażeń
+                        target.unit.Key.total_hp -= (int)damage;
+                    }
+                    else // walka w zwarciu
+                    {
+                        
+
+                  
+
+                    }
 
 
-
-        currentPlayer = !currentPlayer;
+                }
+            }
+        }
     }
 }

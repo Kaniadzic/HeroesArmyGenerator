@@ -93,6 +93,49 @@
 
     public class GameHelper
     {
+        /// <summary>
+        /// Wybranie najwolniejszego przeciwnika z wrogiej armii
+        /// </summary>
+        /// <param name="player"> Obecny "gracz" </param>
+        /// <param name="units"> Lista jednostek </param>
+        /// <returns> Najwolniejsza jednostka </returns>
+        public Field getSlowestEnemy(bool player, List<Field> units)
+        {
+            var result = units
+                .Where(u => u.unit.Key != null)
+                .Where(u => u.unit.Key.player == !player)
+                .Where(u => u.unit.Key.total_hp > 0)
+                .OrderBy(u => u.unit.Key.speed)
+                .FirstOrDefault();
 
+            return result;
+        }
+
+
+        /// <summary>
+        /// Obliczenie obrażeń
+        /// </summary>
+        /// <param name="attack"> Premia do ataku napastnika </param>
+        /// <param name="defense"> Premia do obrony celu </param>
+        /// <param name="minDamage"> Minimalne obrażenia napastnika </param>
+        /// <param name="maxDamage"> Maksymalne obrażenia napastnika </param>
+        /// <param name="units"> Ilość atakujących jednostek </param>
+        /// <returns> Wartość obrażeń </returns>
+        public double calculateDamage(byte attack, byte defense, byte minDamage, byte maxDamage, int units)
+        {
+            Random random = new Random();            
+
+            double damageModifier = ((double)attack - (double)defense) / 100;
+            double randomizedDamage = random.Next(minDamage, maxDamage);
+            double additionalDamage = randomizedDamage * damageModifier;
+            double damage = (randomizedDamage + additionalDamage) * units;
+
+            return damage;
+        }
+
+        public void logger(string message, ConsoleColor color)
+        {
+
+        }
     }
 }
