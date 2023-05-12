@@ -5,49 +5,32 @@ public class HelloWorld
     public static void Main(string[] args)
     {
         int turnCounter = 0;
-        GameHelper helper = new GameHelper();
+        GameLogic helper = new GameLogic();
+        ArmyLogic armyGenerator = new ArmyLogic();
+        BoardLogic boardLogic = new BoardLogic();
 
         #region Generowanie armii
 
-        ArmyGenerator armyGenerator = new ArmyGenerator();
-
         // generowanie armii 1
         int[] armyNumbers1 = armyGenerator.GenerateArmyNumbers();
-        List<KeyValuePair<Unit, int>> army1 = armyGenerator.GenerateArmy(armyNumbers1);
-        foreach(var unit in army1)
-        {
-            unit.Key.player = true;
-            unit.Key.total_hp = unit.Key.hp * unit.Value;
-        }
+        List<KeyValuePair<Unit, int>> army1 = armyGenerator.GenerateArmy(armyNumbers1, true);
 
         // generowanie armii 2
         int[] armyNumbers2 = armyGenerator.GenerateArmyNumbers();
-        List<KeyValuePair<Unit, int>> army2 = armyGenerator.GenerateArmy(armyNumbers2);
-        foreach (var unit in army2)
-        {
-            unit.Key.player = false;
-            unit.Key.total_hp = unit.Key.hp * unit.Value;
-        }
+        List<KeyValuePair<Unit, int>> army2 = armyGenerator.GenerateArmy(armyNumbers2, false);
 
         #endregion
 
         #region Generowanie planszy, pozycji startowych i sortowanie armii (według szybkości jednostek)
 
         // generowanie planszy
-        List<Field> board = new List<Field>();
-
-        for(int i=0; i < 15; i++)
-        {
-            for(int j=0; j < 11; j++)
-            {
-                board.Add(new Field(i, j, new KeyValuePair<Unit, int>(null, 0)));
-            }
-        }
+        List<Field> board = boardLogic.generateGameBoard();
 
         // generowanie pozycji startowych
         var startingPositionsArmy1 = armyGenerator.generateStartingPositions();
         var startingPositionsArmy2 = armyGenerator.generateStartingPositions();
 
+        // wypełnienie planszy jednostkami
         for(int i = 0; i < army1.Count(); i++)
         {
             board.Where(f => f.y == startingPositionsArmy1[i] & f.x == 0).FirstOrDefault().unit = army1.ElementAt(i);
@@ -55,6 +38,7 @@ public class HelloWorld
         }
 
         // wyświetlenie początkowych armii
+        Console.WriteLine("Stan przed bitwą: ");
         helper.logStartingArmies(board.Where(x => x.unit.Key != null));
 
         #endregion
@@ -78,8 +62,6 @@ public class HelloWorld
         // Rozgrywka toczy się dopóki na planszy są dwie armie
         while (existingArmies == 2)
         {
-            turnCounter += 1; // licznik tur
-
             existingArmies = sortedUnits
                 .Where(x => x.unit.Key != null)
                 .Where(x => x.unit.Key.total_hp > 0)
@@ -90,7 +72,10 @@ public class HelloWorld
             // sprawdzenie czy istnieją jeszcze żywe jednostki
             foreach (var u in sortedUnits)
             {
-                if (u.unit.Key.total_hp <= 0) // jeśli jednostka jest martwa to ją pomijamy
+                turnCounter += 1; // licznik tur
+
+                // jeśli jednostka jest martwa to ją pomijamy
+                if (u.unit.Key.total_hp <= 0) 
                 {
                     continue;
                 }
@@ -118,19 +103,184 @@ public class HelloWorld
 
                         // zadanie obrażeń
                         target.unit.Key.total_hp -= (int)damage;
+
+                        helper.logAttack(u, target, (int)damage);
                     }
-                    else // walka w zwarciu
+                    // walka w zwarciu
+                    else
                     {
-                        //helper.getEnemiesInRange(u.unit.Key.player, u.x, u.y, u.unit.Key.speed, board);
+                        // sprawdzenie czy w zasięgu istoty są przeciwnicy
+                        List<Field> fieldsInRange = new List<Field>();
+                        fieldsInRange.AddRange(helper.getFieldsInRange(0, 0, board));
+                        List<Field> temp = new List<Field>();
+                        temp.AddRange(fieldsInRange);
 
-                        helper.getEnemiesInRange(u.unit.Key.player, 0, 0, 2, board);
+                        for (int i = 0; i < u.unit.Key.speed-1; i++)
+                        {
+                            foreach (var f in temp)
+                            {
+                                fieldsInRange.AddRange(helper.getFieldsInRange(f.x, f.y, board));
+                            }
 
+                            temp.AddRange(fieldsInRange.Distinct().ToList());
+                        }
+
+                        fieldsInRange = fieldsInRange.Distinct().ToList();
+
+                        // przeciwnicy w zasięgu
+                        List<Field> enemiesInRange = fieldsInRange
+                            .Where(x => x.unit.Key != null)
+                            .Where(x => x.unit.Key.player == !u.unit.Key.player)
+                            .ToList();
+
+                        // brak przeciwników w zasięgu
+                        if (enemiesInRange.Count() == 0)
+                        {
+                            var closestEnemy = board
+                                .Where(e => e.unit.Key != null)
+                                .Where(e => e.unit.Key.player == !u.unit.Key.player)
+                                .OrderBy(e => Math.Abs(e.x - u.x))
+                                .ThenBy(e => Math.Abs(e.y - u.y))
+                                .FirstOrDefault();
+
+                            // ruch po osi X
+                            if (closestEnemy.x > u.x)
+                            {
+                                var targetField = board
+                                   .Where(n => n.x == u.x + 1)
+                                   .Where(n => n.y == u.y)
+                                   .FirstOrDefault();
+
+                                if (targetField.unit.Key == null) // ruszamy jednostkę tylko jeśli pole docelowe jest puste
+                                {
+                                    targetField.unit = u.unit;
+                                    u.unit = new KeyValuePair<Unit, int>(null, 0);
+                                }
+                            }
+                            else
+                            {
+                                var targetField = board
+                                   .Where(n => n.x == u.x - 1)
+                                   .Where(n => n.y == u.y)
+                                   .FirstOrDefault();
+
+                                if (targetField != null && targetField.unit.Key == null) // ruszamy jednostkę tylko jeśli pole docelowe jest puste
+                                {
+                                    targetField.unit = u.unit;
+                                    u.unit = new KeyValuePair<Unit, int>(null, 0);
+                                }
+                            }
+
+                            // ruch po osi Y
+                            if (closestEnemy.y > u.y)
+                            {
+                                var targetField = board
+                                   .Where(n => n.x == u.x)
+                                   .Where(n => n.y == u.y + 1)
+                                   .FirstOrDefault();
+
+                                if (targetField.unit.Key == null) // ruszamy jednostkę tylko jeśli pole docelowe jest puste
+                                {
+                                    targetField.unit = u.unit;
+                                    u.unit = new KeyValuePair<Unit, int>(null, 0);
+                                }
+                            }
+                            else
+                            {
+                                var targetField = board
+                                   .Where(n => n.x == u.x)
+                                   .Where(n => n.y == u.y + 1)
+                                   .FirstOrDefault();
+
+                                if (targetField != null && targetField.unit.Key == null) // ruszamy jednostkę tylko jeśli pole docelowe jest puste
+                                {
+                                    targetField.unit = u.unit;
+                                    u.unit = new KeyValuePair<Unit, int>(null, 0);
+                                }
+                            }
+                        }
+                        // przeciwnik w zasięgu
+                        else
+                        {
+                            if (u.unit.Key.attack >= 10) // silne jednostki atakują słabe jednostki
+                            {
+                                var target = helper.getLowestDefenseEnemy(u.unit.Key.player, enemiesInRange);
+
+                                if (target != null)
+                                {
+                                    // sprawdzenie czy można podejść do celu
+                                    var space = helper
+                                        .getFieldsInRange(target.x, target.y, board)
+                                        .Where(x => x.unit.Key == null)
+                                        .OrderBy(e => Math.Abs(e.x - u.x))
+                                        .ThenBy(e => Math.Abs(e.y - u.y))
+                                        .FirstOrDefault();
+
+                                    if (space != null)
+                                    {
+                                        space.unit = u.unit;
+                                        u.unit = new KeyValuePair<Unit, int>(null, 0);
+
+                                        // atak
+                                        // obliczenie obrażeń
+                                        double damage = helper.calculateDamage(
+                                            space.unit.Key.attack,
+                                            target.unit.Key.defense,
+                                            space.unit.Key.minDamage,
+                                            space.unit.Key.maxDamage,
+                                            space.unit.Key.total_hp / space.unit.Key.hp
+                                        );
+
+                                        // zadanie obrażeń
+                                        target.unit.Key.total_hp -= (int)damage;
+                                    }
+                                }                                   
+                            }
+                            else // słabe jednostki atakują ranne jednostki
+                            {
+                                var target = helper.getLowestHealthEnemy(u.unit.Key.player, enemiesInRange);
+
+                                if (target != null)
+                                {
+                                    // sprawdzenie czy można podejść do celu
+                                    var space = helper
+                                        .getFieldsInRange(target.x, target.y, board)
+                                        .Where(x => x.unit.Key == null)
+                                        .OrderBy(e => Math.Abs(e.x - u.x))
+                                        .ThenBy(e => Math.Abs(e.y - u.y))
+                                        .FirstOrDefault();
+
+                                    if (space != null)
+                                    {
+                                        space.unit = u.unit;
+                                        u.unit = new KeyValuePair<Unit, int>(null, 0);
+
+                                        // atak
+                                        // obliczenie obrażeń
+                                        double damage = helper.calculateDamage(
+                                            space.unit.Key.attack,
+                                            target.unit.Key.defense,
+                                            space.unit.Key.minDamage,
+                                            space.unit.Key.maxDamage,
+                                            space.unit.Key.total_hp / space.unit.Key.hp
+                                        );
+
+                                        // zadanie obrażeń
+                                        target.unit.Key.total_hp -= (int)damage;
+                                    }
+                                }         
+                            }
+                        }
                     }
-
-
                 }
             }
         }
+
+        #endregion
+
+        #region Po bitwie
+
+        helper.logGameResult(board, turnCounter);
 
         #endregion
     }

@@ -1,6 +1,6 @@
 ﻿namespace Heroes
 {
-    public class ArmyGenerator
+    public class ArmyLogic
     {
         /// <summary>
         /// Wygenerowanie liczebności armii
@@ -26,7 +26,7 @@
         /// <param name="unitList"> Lista jednostek jakie mają znaleźć się w armii (musi być 7 elementów) </param>
         /// <param name="armyNumbers"> Tablica z liczebnością jednostek w armii (musi być 7 elementów) </param>
         /// <returns> Słownik <Jednostka, liczebność> armii </returns>
-        public List<KeyValuePair<Unit, int>> GenerateArmy(int[] armyNumbers)
+        public List<KeyValuePair<Unit, int>> GenerateArmy(int[] armyNumbers, bool player)
         {
             List<Unit> unitList = new List<Unit>();
 
@@ -43,6 +43,12 @@
             for (int i = 0; i < 7; i++)
             {
                 army.Add(new KeyValuePair<Unit, int>(unitList[i], armyNumbers[i]));
+            }
+
+            foreach (var unit in army)
+            {
+                unit.Key.player = player;
+                unit.Key.total_hp = unit.Key.hp * unit.Value;
             }
 
             return army;
@@ -77,7 +83,7 @@
             Random random = new Random();
             List<int> positions = new List<int>();
 
-            while(positions.Count() < 7)
+            while (positions.Count() < 7)
             {
                 int r = random.Next(0, 11);
 
@@ -88,193 +94,6 @@
             }
 
             return positions;
-        }
-    }
-
-    public class GameHelper
-    {
-        /// <summary>
-        /// Wybranie najwolniejszego przeciwnika z wrogiej armii
-        /// </summary>
-        /// <param name="player"> Obecny "gracz" </param>
-        /// <param name="units"> Lista jednostek </param>
-        /// <returns> Najwolniejsza jednostka </returns>
-        public Field getSlowestEnemy(bool player, List<Field> units)
-        {
-            var result = units
-                .Where(u => u.unit.Key != null)
-                .Where(u => u.unit.Key.player == !player)
-                .Where(u => u.unit.Key.total_hp > 0)
-                .OrderBy(u => u.unit.Key.speed)
-                .FirstOrDefault();
-
-            return result;
-        }
-
-        /// <summary>
-        /// Obliczenie obrażeń
-        /// </summary>
-        /// <param name="attack"> Premia do ataku napastnika </param>
-        /// <param name="defense"> Premia do obrony celu </param>
-        /// <param name="minDamage"> Minimalne obrażenia napastnika </param>
-        /// <param name="maxDamage"> Maksymalne obrażenia napastnika </param>
-        /// <param name="units"> Ilość atakujących jednostek </param>
-        /// <returns> Wartość obrażeń </returns>
-        public double calculateDamage(byte attack, byte defense, byte minDamage, byte maxDamage, int units)
-        {
-            Random random = new Random();            
-
-            double damageModifier = ((double)attack - (double)defense) / 100;
-            double randomizedDamage = random.Next(minDamage, maxDamage);
-            double additionalDamage = randomizedDamage * damageModifier;
-            double damage = (randomizedDamage + additionalDamage) * units;
-
-            return damage;
-        }
-
-        /// <summary>
-        /// Wyświetlenie początkowych armii
-        /// </summary>
-        /// <param name="units"> Jednostki do wyświetlenia </param>
-        public void logStartingArmies(IEnumerable<Field> units)
-        {
-            Console.WriteLine(" ============= Kompozycja armii ============= ");
-            foreach (var u in units)
-            {
-                if (u.unit.Key.player)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Blue;
-                }
-
-                Console.WriteLine($"Gracz {u.unit.Key.player} jednostka {u.unit.Key.name} [{u.unit.Value}] jest na pozycji X: {u.x} Y: {u.y}");
-            }
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-
-        public List<Field> getEnemiesInRange(bool player, int x, int y, int speed, List<Field> board)
-        {
-            List<Field> result = new List<Field>();
-
-            if (y % 2 == 0)
-            {
-                var n1 = board
-                    .Where(n => n.x == x - 1)
-                    .Where(n => n.y == y - 1)
-                    .FirstOrDefault();
-
-                var n2 = board
-                    .Where(n => n.x == x)
-                    .Where(n => n.y == y - 1)
-                    .FirstOrDefault();
-
-                var n3 = board
-                    .Where(n => n.x == x + 1)
-                    .Where(n => n.y == y)
-                    .FirstOrDefault();
-
-                var n4 = board
-                    .Where(n => n.x == x)
-                    .Where(n => n.y == y + 1)
-                    .FirstOrDefault();
-
-                var n5 = board
-                    .Where(n => n.x == x - 1)
-                    .Where(n => n.y == y + 1)
-                    .FirstOrDefault();
-
-                var n6 = board
-                    .Where(n => n.x == x - 1)
-                    .Where(n => n.y == y)
-                    .FirstOrDefault();
-
-                if (!result.Contains(n1) && n1 != null)
-                {
-                    result.Add(n1);
-                }
-                if (!result.Contains(n2) && n2 != null)
-                {
-                    result.Add(n2);
-                }
-                if (!result.Contains(n3) && n3 != null)
-                {
-                    result.Add(n3);
-                }
-                if (!result.Contains(n4) && n4 != null)
-                {
-                    result.Add(n4);
-                }
-                if (!result.Contains(n5) && n5 != null)
-                {
-                    result.Add(n5);
-                }
-                if (!result.Contains(n6) && n6 != null)
-                {
-                    result.Add(n6);
-                }
-            }
-            else
-            {
-                var n1 = board
-                    .Where(n => n.x == x)
-                    .Where(n => n.y == y - 1)
-                    .FirstOrDefault();
-
-                var n2 = board
-                    .Where(n => n.x == x + 1)
-                    .Where(n => n.y == y - 1)
-                    .FirstOrDefault();
-
-                var n3 = board
-                    .Where(n => n.x == x + 1)
-                    .Where(n => n.y == y)
-                    .FirstOrDefault();
-
-                var n4 = board
-                    .Where(n => n.x == x + 1)
-                    .Where(n => n.y == y + 1)
-                    .FirstOrDefault();
-
-                var n5 = board
-                    .Where(n => n.x == x)
-                    .Where(n => n.y == y + 1)
-                    .FirstOrDefault();
-
-                var n6 = board
-                    .Where(n => n.x == x - 1)
-                    .Where(n => n.y == y)
-                    .FirstOrDefault();
-
-                if (!result.Contains(n1) && n1 != null)
-                {
-                    result.Add(n1);
-                }
-                if (!result.Contains(n2) && n2 != null)
-                {
-                    result.Add(n2);
-                }
-                if (!result.Contains(n3) && n3 != null)
-                {
-                    result.Add(n3);
-                }
-                if (!result.Contains(n4) && n4 != null)
-                {
-                    result.Add(n4);
-                }
-                if (!result.Contains(n5) && n5 != null)
-                {
-                    result.Add(n5);
-                }
-                if (!result.Contains(n6) && n6 != null)
-                {
-                    result.Add(n6);
-                }
-            }
-
-            return result;
         }
     }
 }
